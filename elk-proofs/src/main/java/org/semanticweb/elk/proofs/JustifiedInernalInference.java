@@ -6,7 +6,7 @@ package org.semanticweb.elk.proofs;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2011 - 2017 Department of Computer Science, University of Oxford
+ * Copyright (C) 2011 - 2021 Department of Computer Science, University of Oxford
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.liveontologies.puli.AxiomPinpointingInference;
+import org.liveontologies.puli.DelegatingInference;
 import org.liveontologies.puli.Inference;
-import org.liveontologies.puli.InferenceJustifier;
 import org.semanticweb.elk.owl.interfaces.ElkAxiom;
 import org.semanticweb.elk.owl.visitors.DummyElkAxiomVisitor;
 import org.semanticweb.elk.reasoner.tracing.Conclusion;
@@ -36,17 +37,23 @@ import org.semanticweb.elk.reasoner.tracing.ConclusionBaseFactory;
 import org.semanticweb.elk.reasoner.tracing.DummyConclusionVisitor;
 import org.semanticweb.elk.reasoner.tracing.TracingInferencePremiseVisitor;
 
-public class InternalJustifier
-		implements InferenceJustifier<Inference<?>, Set<? extends ElkAxiom>> {
+public class JustifiedInernalInference<C>
+		extends DelegatingInference<C, Inference<? extends C>>
+		implements AxiomPinpointingInference<C, ElkAxiom> {
+
+	public JustifiedInernalInference(Inference<? extends C> delegate) {
+		super(delegate);
+	}
 
 	@Override
-	public Set<? extends ElkAxiom> getJustification(
-			final Inference<?> inference) {
-		if (!(inference instanceof TracingInferenceWrap)) {
+	public Set<? extends ElkAxiom> getJustification() {
+		Inference<? extends C> inference = getDelegate();
+
+		if (!(inference instanceof TracingAxiomPinpointingInference)) {
 			return Collections.emptySet();
 		}
 		// else
-		final TracingInferenceWrap tracingInference = (TracingInferenceWrap) inference;
+		final TracingAxiomPinpointingInference tracingInference = (TracingAxiomPinpointingInference) inference;
 		final Set<ElkAxiom> result = new HashSet<ElkAxiom>();
 		tracingInference.getDelegate()
 				.accept(new TracingInferencePremiseVisitor<Void>(

@@ -23,8 +23,9 @@ package org.semanticweb.elk.owlapi.proofs;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-import org.liveontologies.puli.Inference;
+import org.liveontologies.puli.AxiomPinpointingInference;
 import org.liveontologies.puli.Inferences;
 import org.liveontologies.puli.Proof;
 import org.semanticweb.elk.exceptions.ElkException;
@@ -36,23 +37,26 @@ import org.semanticweb.elk.proofs.InternalProof;
 import org.semanticweb.elk.reasoner.Reasoner;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
-public class OwlInternalProof implements Proof<Inference<Object>> {
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+
+public class OwlInternalProof
+		implements Proof<AxiomPinpointingInference<?, OWLAxiom>> {
 
 	private final OwlConverter owlConverter_ = OwlConverter.getInstance();
 	private final ElkConverter elkConverter_ = ElkConverter.getInstance();
 
 	private final OWLAxiom goal_;
-	private final Inference<Object> goalInference_;
-	private final InternalProof proof_;
+	private final AxiomPinpointingInference<?, OWLAxiom> goalInference_;
+	private final Proof<AxiomPinpointingInference<?, ElkAxiom>> proof_;
 
 	public OwlInternalProof(final Reasoner reasoner, final OWLAxiom goal) {
 		this.goal_ = goal;
 		final ElkAxiom convertedGoal = owlConverter_.convert(goal);
 		this.goalInference_ = Inferences.create("Converting inference", goal,
-				Arrays.asList(convertedGoal));
+				Arrays.asList(convertedGoal), Collections.emptySet());
 		try {
-			this.proof_ = new InternalProof(reasoner,
-					owlConverter_.convert(goal));
+			this.proof_ = new InternalProof(reasoner, convertedGoal);
 		} catch (final ElkException e) {
 			throw elkConverter_.convert(e);
 		} catch (final ElkRuntimeException e) {
@@ -60,20 +64,29 @@ public class OwlInternalProof implements Proof<Inference<Object>> {
 		}
 	}
 
-	public Object getGoal() {
+	public OWLAxiom getGoal() {
 		return goal_;
 	}
 
 	@Override
-	public Collection<? extends Inference<Object>> getInferences(
+	public Collection<AxiomPinpointingInference<?, OWLAxiom>> getInferences(
 			final Object conclusion) {
 		if (goal_.equals(conclusion)) {
-			final Collection<? extends Inference<Object>> result = Arrays
+			final Collection<AxiomPinpointingInference<?, OWLAxiom>> result = Arrays
 					.asList(goalInference_);
 			return result;
 		}
 		// else
-		return proof_.getInferences(conclusion);
+		return Collections2.transform(proof_.getInferences(conclusion),
+				new Function<AxiomPinpointingInference<?, ElkAxiom>, AxiomPinpointingInference<?, OWLAxiom>>() {
+
+					@Override
+					public AxiomPinpointingInference<?, OWLAxiom> apply(
+							AxiomPinpointingInference<?, ElkAxiom> inf) {
+						return new JustifiedOwlInference<>(inf);
+					}
+
+				});
 	}
 
 }

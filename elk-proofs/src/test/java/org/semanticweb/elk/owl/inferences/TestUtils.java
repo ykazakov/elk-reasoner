@@ -22,10 +22,12 @@
 package org.semanticweb.elk.owl.inferences;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
-import org.liveontologies.puli.InferenceDerivabilityChecker;
+import org.liveontologies.puli.DerivabilityChecker;
 import org.liveontologies.puli.Proof;
+import org.liveontologies.puli.Proofs;
 import org.semanticweb.elk.exceptions.ElkException;
 import org.semanticweb.elk.owl.interfaces.ElkAxiom;
 import org.semanticweb.elk.owl.interfaces.ElkObject;
@@ -51,14 +53,16 @@ public class TestUtils {
 			ElkAxiom goal) throws ElkException {
 		Proof<ElkInference> elkInferences = ReasonerElkProof.create(reasoner,
 				goal, factory);
-		InferenceDerivabilityChecker<ElkAxiom, ElkInference> checker = new InferenceDerivabilityChecker<ElkAxiom, ElkInference>(
-				elkInferences);
-		if (!checker.isDerivable(goal)) {
-			return null;
+		// Proofs.print(elkInferences, goal);
+		DerivabilityChecker<?> checker = Proofs.getDerivabilityChecker(elkInferences); 
+		// determine which conclusions are derivable
+		if (checker.isDerivable(goal)) {
+			return Collections.emptySet();
 		}
-		Set<? extends ElkAxiom> nonDerivable = checker
-				.getNonDerivableConclusions();
-		return nonDerivable;
+		// else collect only non-derivable conclusions
+		Proof<?> explanation = checker.explainIsDerivable(goal);
+		return Proofs.unfoldRecursively(elkInferences, goal, inf -> explanation
+				.getInferences(inf.getConclusion()).isEmpty());
 	}
 
 	public static void provabilityTest(Reasoner reasoner,
@@ -68,9 +72,6 @@ public class TestUtils {
 		LOGGER_.debug("Provability test: {}", goal);
 		Set<? extends ElkAxiom> nonDerivable = getNonDerivable(reasoner,
 				ontology, factory, goal);
-		if (nonDerivable == null) {
-			throw new AssertionError(String.format("%s: not derivable", goal));
-		}
 		if (!nonDerivable.isEmpty()) {
 			throw new AssertionError(
 					String.format("%s: not derivable", nonDerivable));

@@ -31,8 +31,11 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.liveontologies.puli.AxiomPinpointingInference;
+import org.liveontologies.puli.Prover;
 import org.semanticweb.elk.ElkTestUtils;
 import org.semanticweb.elk.owlapi.ElkProver;
+import org.semanticweb.elk.owlapi.ElkReasoner;
 import org.semanticweb.elk.owlapi.EntailmentTestManifestCreator;
 import org.semanticweb.elk.owlapi.OWLAPITestUtils;
 import org.semanticweb.elk.owlapi.TestOWLManager;
@@ -53,7 +56,9 @@ public class OwlInternalProofTest {
 	// @formatter:off
 	static final String[] IGNORE_LIST = {};
 	static final String[] IGNORE_COMPLETENESS_LIST = {
-			ElkTestUtils.TEST_INPUT_LOCATION + "/query/entailment/EmptyOntology.owl",// All entailments are tautologies.
+			ElkTestUtils.TEST_INPUT_LOCATION
+					+ "/query/entailment/EmptyOntology.owl",// All entailments
+															// are tautologies.
 	};
 	// @formatter:on
 
@@ -64,9 +69,9 @@ public class OwlInternalProofTest {
 
 	private final QueryTestManifest<OWLAxiom, ?> manifest_;
 
-	private ElkProver prover_ = null;
+	private ElkProver elk_ = null;
 	private OWLAxiom query_ = null;
-	private OwlInternalProof adapter_ = null;
+	private Prover<OWLAxiom, AxiomPinpointingInference<?, OWLAxiom>> prover_ = null;
 
 	public OwlInternalProofTest(final QueryTestManifest<OWLAxiom, ?> manifest) {
 		this.manifest_ = manifest;
@@ -81,28 +86,29 @@ public class OwlInternalProofTest {
 		OWLOntologyManager manager = TestOWLManager.createOWLOntologyManager();
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(input);
 
-		this.prover_ = OWLAPITestUtils.createProver(ontology);
+		this.elk_ = OWLAPITestUtils.createProver(ontology);
 
 		this.query_ = manifest_.getInput().getQuery();
 
 		// exclude incomplete entailments
-		Assume.assumeTrue(!prover_.getDelegate().checkEntailment(query_)
+		Assume.assumeTrue(!elk_.getDelegate().checkEntailment(query_)
 				.getIncompletenessMonitor().isIncompletenessDetected());
-		this.adapter_ = new OwlInternalProof(
-				prover_.getDelegate().getInternalReasoner(), query_);
+		this.prover_ = query -> new OwlInternalProof(
+				elk_.getDelegate().getInternalReasoner(), query);
 	}
 
 	@Test
 	public void testProvability() throws Exception {
-		ProofTestUtils.provabilityTest(adapter_, adapter_.getGoal());
+		ProofTestUtils.provabilityTest(prover_, query_);
 	}
 
 	@Test
 	public void testProofCompleteness() throws Exception {
 		Assume.assumeFalse(TestUtils.ignore(manifest_.getInput(),
 				ElkTestUtils.TEST_INPUT_LOCATION, IGNORE_COMPLETENESS_LIST));
-		ProofTestUtils.proofCompletenessTest(prover_.getDelegate(), query_,
-				adapter_.getGoal(), adapter_, new OwlInternalJustifier(), true);
+		ProofTestUtils.proofCompletenessTest(
+				(ElkReasoner) elk_.getDelegate(), prover_,
+				query_, true);
 	}
 
 	@Config
@@ -117,8 +123,8 @@ public class OwlInternalProofTest {
 
 	@After
 	public void after() throws Exception {
-		if (prover_ != null) {
-			prover_.dispose();
+		if (elk_ != null) {
+			elk_.dispose();
 		}
 	}
 

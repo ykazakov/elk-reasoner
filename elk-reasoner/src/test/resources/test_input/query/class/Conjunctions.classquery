@@ -17,4 +17,8 @@ SubClassOf(ObjectIntersectionOf(:A :D) :C)
 SubClassOf(owl:Nothing ObjectIntersectionOf(:A :D ObjectSomeValuesFrom(:R :B)))
 SubClassOf(ObjectIntersectionOf(:A :D ObjectSomeValuesFrom(:R :B)) :A)
 
+SubClassOf(:A :B)
+SubClassOf(:A :C)
+SubClassOf(:B :D)
+SubClassOf(:C :D)
 )

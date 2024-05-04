@@ -9,4 +9,7 @@ SubClassOf(:B ObjectIntersectionOf(:C ObjectSomeValuesFrom(:R :B)))
 
 EquivalentClasses(owl:Thing :C ObjectIntersectionOf(:C ObjectSomeValuesFrom(:R :B)))
 
+SubClassOf(:A :B)
+
+EquivalentClasses(owl:Thing :C)
 )

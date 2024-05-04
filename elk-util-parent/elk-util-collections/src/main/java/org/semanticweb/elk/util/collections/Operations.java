@@ -197,9 +197,14 @@ public class Operations {
 	 * @param first
 	 *            the elements that should come first
 	 * @param second
+<<<<<<< Upstream, based on origin/main
 	 *            the elements that should come next
 	 * @return an iterator that iterates that advances the two given iterators
 	 *         at the same time and returns the values of the second iterator
+=======
+	 * @return an iterator that advances the two given iterators at the same
+	 *         time and returns the values of the second iterator
+>>>>>>> 018e1ef WIP Puli 0.2
 	 */
 	public static <T> Iterator<T> synchronize(Iterator<?> first,
 			Iterator<? extends T> second) {

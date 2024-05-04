@@ -1,5 +1,8 @@
 package org.semanticweb.elk.owlapi.proofs;
 
+import java.util.Collections;
+import java.util.Set;
+
 /*-
  * #%L
  * ELK OWL API Binding
@@ -23,14 +26,16 @@ package org.semanticweb.elk.owlapi.proofs;
  */
 
 import org.liveontologies.puli.AbstractConvertedInference;
+import org.liveontologies.puli.AxiomPinpointingInference;
 import org.liveontologies.puli.Inference;
+import org.liveontologies.puli.Inferences;
 import org.semanticweb.elk.owl.interfaces.ElkAxiom;
 import org.semanticweb.elk.owlapi.ElkConverter;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 public class ElkOwlInference
 		extends AbstractConvertedInference<ElkAxiom, OWLAxiom>
-		implements Inference<OWLAxiom> {
+		implements AxiomPinpointingInference<OWLAxiom, OWLAxiom> {
 
 	public ElkOwlInference(Inference<ElkAxiom> elkInference) {
 		super(elkInference);
@@ -39,6 +44,18 @@ public class ElkOwlInference
 	@Override
 	protected OWLAxiom convert(ElkAxiom axiom) {
 		return ElkConverter.getInstance().convert(axiom);
+	}
+
+	@Override
+	public Set<? extends OWLAxiom> getJustification() {
+		if (Inferences.isAsserted(this)) {
+			Object conclusion = getConclusion();
+			if (conclusion instanceof OWLAxiom) {
+				return Collections.singleton((OWLAxiom) getConclusion());
+			}
+		}
+		// else
+		return Collections.emptySet();
 	}
 
 }

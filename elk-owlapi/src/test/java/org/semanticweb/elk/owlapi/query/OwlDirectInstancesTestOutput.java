@@ -2,11 +2,11 @@ package org.semanticweb.elk.owlapi.query;
 
 /*-
  * #%L
- * ELK OWL API v.4 Binding
+ * ELK OWL API Binding
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2011 - 2020 Department of Computer Science, University of Oxford
+ * Copyright (C) 2011 - 2026 Live Ontologies Project
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ package org.semanticweb.elk.owlapi.query;
 import java.util.Collection;
 
 import org.semanticweb.elk.owlapi.ElkReasoner;
-import org.semanticweb.elk.reasoner.completeness.IncompleteResult;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -36,39 +35,30 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 public class OwlDirectInstancesTestOutput extends
-		OwlDirectRelatedEntitiesTestOutput<OWLNamedIndividual, OwlDirectInstancesTestOutput> {
+		OwlRelatedEntitiesTestOutput<OWLNamedIndividual, OwlDirectInstancesTestOutput> {
 
 	private static OWLDataFactory FACTORY_ = new OWLDataFactoryImpl();
-
-	private final OWLClassExpression query_;
-
+	
 	OwlDirectInstancesTestOutput(OWLClassExpression query,
-			IncompleteResult<? extends Collection<? extends Node<OWLNamedIndividual>>> incompleteDirectInstanceNodes) {
-		super(incompleteDirectInstanceNodes);
-		this.query_ = query;
-	}
-
-	OwlDirectInstancesTestOutput(OWLClassExpression query,
-			Collection<? extends Node<OWLNamedIndividual>> directInstanceNodes) {
-		super(directInstanceNodes);
-		this.query_ = query;
+			Collection<? extends Node<OWLNamedIndividual>> disjointNodes) {
+		super(query, disjointNodes);
 	}
 
 	OwlDirectInstancesTestOutput(ElkReasoner reasoner,
 			OWLClassExpression query) {
-		this(query,
+		super(query,
 				reasoner.computeInstances(query, true).map(NodeSet::getNodes));
 	}
 
 	@Override
-	protected OwlDirectRelatedEntitiesDiffable.Listener<OWLNamedIndividual> adaptListener(
+	protected OwlRelatedEntitiesDiffable.Listener<OWLNamedIndividual> adaptListener(
 			Listener<OWLAxiom> listener) {
-		return new OwlDirectRelatedEntitiesDiffable.Listener<OWLNamedIndividual>() {
+		return new OwlRelatedEntitiesDiffable.Listener<OWLNamedIndividual>() {
 
 			@Override
 			public void missingCanonical(OWLNamedIndividual canonical) {
 				listener.missing(
-						FACTORY_.getOWLClassAssertionAxiom(query_, canonical));
+						FACTORY_.getOWLClassAssertionAxiom(getQuery(), canonical));
 			}
 
 			@Override

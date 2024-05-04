@@ -83,7 +83,7 @@ public class BasicTestManifest<I extends TestInput, O extends DiffableOutput<?, 
 		}
 		if (!expectedContainsAllActual) {
 			expOutput.reportMissingElementsOf(actualOutput,
-					getPrintingListener("< ", message));
+					getPrintingListener("> ", message));
 		}
 		throw new TestResultComparisonException(message.toString(), expOutput,
 				actualOutput);

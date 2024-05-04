@@ -28,15 +28,34 @@ package org.semanticweb.elk.testing;
  * @author Yevgeny Kazakov
  * 
  * @param <O>
- *            the type of the output which elements can be compared
+ *                the type of the output which elements can be compared
  * @param <L>
- *            the listener using which one can report missing elements
+ *                the listener using which one can report missing elements
  * 
  */
 public interface Diffable<O, L> {
 
+	/**
+	 * Checks if all other outputs are contained in this output
+	 * 
+	 * @param other
+	 *                  the other outputs
+	 * @return {@code true} if all other outputs are contained in this output
+	 *         and {@code false} otherwise
+	 */
 	boolean containsAllElementsOf(O other);
 
+	/**
+	 * Reports all other outputs not contained in this output using the provided
+	 * listener
+	 * 
+	 * 
+	 * @param other
+	 *                     the other outputs
+	 * @param listener
+	 *                     the listener using which the missing outputs are
+	 *                     reported
+	 */
 	void reportMissingElementsOf(O other, L listener);
 
 }

@@ -43,20 +43,20 @@ import org.semanticweb.owlapi.reasoner.Node;
  * @param <O>
  *            the type of the output which this output can be compared
  */
-public class OwlDirectRelatedEntitiesDiffable<E extends OWLEntity, O extends OwlDirectRelatedEntitiesDiffable<E, O>>
+public class OwlRelatedEntitiesDiffable<E extends OWLEntity, O extends OwlRelatedEntitiesDiffable<E, O>>
 		extends IncompleteTestOutput<Collection<? extends Node<E>>>
-		implements Diffable<O, OwlDirectRelatedEntitiesDiffable.Listener<E>> {
+		implements Diffable<O, OwlRelatedEntitiesDiffable.Listener<E>> {
 
 	private final Map<E, Node<E>> nodesByMembers_;
 
-	OwlDirectRelatedEntitiesDiffable(
+	OwlRelatedEntitiesDiffable(
 			IncompleteResult<? extends Collection<? extends Node<E>>> incompleteDisjointNodes) {
 		super(incompleteDisjointNodes);
 		nodesByMembers_ = new HashMap<>(getValue().size());
 		getValue().forEach(n -> n.forEach(e -> nodesByMembers_.put(e, n)));
 	}
 
-	OwlDirectRelatedEntitiesDiffable(
+	OwlRelatedEntitiesDiffable(
 			Collection<? extends Node<E>> disjointNodes) {
 		super(disjointNodes);
 		nodesByMembers_ = new HashMap<>(getValue().size());

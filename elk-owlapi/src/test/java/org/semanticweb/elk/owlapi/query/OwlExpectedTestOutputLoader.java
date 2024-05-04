@@ -23,6 +23,7 @@ package org.semanticweb.elk.owlapi.query;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.semanticweb.elk.owlapi.TestOWLManager;
@@ -78,7 +80,8 @@ public class OwlExpectedTestOutputLoader {
 	 * axioms and related by class assertion axioms.
 	 * 
 	 * @param expectedOutput
-	 *            contains the ontology that encode the expected output
+	 *                           contains the ontology that encode the expected
+	 *                           output
 	 * @return an object providing the leaded exected test output
 	 */
 	public static OwlExpectedTestOutputLoader load(
@@ -86,10 +89,14 @@ public class OwlExpectedTestOutputLoader {
 
 		final OWLOntologyManager manager = TestOWLManager
 				.createOWLOntologyManager();
+		
+		final OWLClass owlThing = manager.getOWLDataFactory().getOWLThing();
+		final OWLClass owlNothing = manager.getOWLDataFactory().getOWLNothing();
+		
 		try {
 
 			final OWLOntology expectedOnt = manager
-					.loadOntologyFromOntologyDocument(expectedOutput);
+					.loadOntologyFromOntologyDocument(expectedOutput);			
 
 			final Set<OWLClassExpression> complex = new HashSet<OWLClassExpression>();
 			final Map<OWLClassExpression, OWLClassNode> equivalent = new HashMap<OWLClassExpression, OWLClassNode>();
@@ -165,7 +172,7 @@ public class OwlExpectedTestOutputLoader {
 				});
 			}
 
-			return new OwlExpectedTestOutputLoader(complex, equivalent,
+			return new OwlExpectedTestOutputLoader(owlThing, owlNothing, complex, equivalent,
 					superClasses, subClasses, same, instances);
 
 		} catch (final OWLOntologyCreationException e) {
@@ -174,6 +181,7 @@ public class OwlExpectedTestOutputLoader {
 
 	}
 
+	final OWLClass owlThing_, owlNothing_;
 	final Set<OWLClassExpression> queryClasses_;
 	final Map<OWLClassExpression, OWLClassNode> equivalent_;
 	final Multimap<OWLClassExpression, OWLClass> superClasses_;
@@ -182,12 +190,16 @@ public class OwlExpectedTestOutputLoader {
 	final Multimap<OWLClassExpression, OWLNamedIndividual> instances_;
 
 	private OwlExpectedTestOutputLoader(
+			final OWLClass owlThing,
+			final OWLClass owlNothing,			
 			final Set<OWLClassExpression> queryClasses,
 			final Map<OWLClassExpression, OWLClassNode> equivalent,
 			final Multimap<OWLClassExpression, OWLClass> superClasses,
 			final Multimap<OWLClassExpression, OWLClass> subClasses,
 			final Map<OWLIndividual, OWLNamedIndividualNode> same,
 			final Multimap<OWLClassExpression, OWLNamedIndividual> instances) {
+		this.owlThing_ = owlThing;
+		this.owlNothing_ = owlNothing;
 		this.queryClasses_ = queryClasses;
 		this.equivalent_ = equivalent;
 		this.superClasses_ = superClasses;
@@ -195,7 +207,66 @@ public class OwlExpectedTestOutputLoader {
 		this.same_ = same;
 		this.instances_ = instances;
 	}
+	
+	private final Operations.Transformation<OWLClass, OWLClassNode> classToNode_ = new Operations.Transformation<OWLClass, OWLClassNode>() {
+		@Override
+		public OWLClassNode transform(final OWLClass cls) {
+			final OWLClassNode result = equivalent_.get(cls);
+			if (result != null) {
+				return result;
+			}
+			// else
+			return new OWLClassNode(cls);
+		}
+	};
+	
+	private final Operations.Transformation<OWLNamedIndividual, OWLNamedIndividualNode> individualToNode_ = new Operations.Transformation<OWLNamedIndividual, OWLNamedIndividualNode>() {
+		@Override
+		public OWLNamedIndividualNode transform(
+				final OWLNamedIndividual ind) {
+			final OWLNamedIndividualNode result = same_
+					.get(ind);
+			if (result != null) {
+				return result;
+			}
+			// else
+			return new OWLNamedIndividualNode(ind);
+		}
+	};
 
+	private Collection<OWLClass> getAllSuperClasses(OWLClassExpression queryClass) {
+		Set<OWLClass> result = new HashSet<>();
+		Queue<OWLClass> todo = new ArrayDeque<OWLClass>(
+				superClasses_.get(queryClass));
+		final OWLClassNode equivalent = equivalent_.get(queryClass);
+		if (equivalent == null || !equivalent.getEntities().contains(owlThing_)) {
+			todo.add(owlThing_);			
+		}
+		while (!todo.isEmpty()) {
+			OWLClass next = todo.poll();
+			if (result.add(next)) {				
+				result.addAll(classToNode_.transform(next).getEntities());
+				todo.addAll(superClasses_.get(next));				
+			}
+		}
+		return result;	
+	}
+	
+	private Collection<OWLClass> getAllSubClasses(OWLClassExpression queryClass) {
+		Set<OWLClass> result = new HashSet<>();
+		Queue<OWLClass> todo = new ArrayDeque<OWLClass>(
+				subClasses_.get(queryClass));
+		todo.add(owlNothing_);
+		while (!todo.isEmpty()) {
+			OWLClass next = todo.poll();
+			if (result.add(next)) {
+				result.addAll(classToNode_.transform(next).getEntities());
+				todo.addAll(subClasses_.get(next));
+			}
+		}
+		return result;
+	}
+	
 	public Collection<QueryTestManifest<OWLClassExpression, EmptyTestOutput>> getNoOutputManifests(
 			final String name, final URL input) {
 
@@ -247,7 +318,7 @@ public class OwlExpectedTestOutputLoader {
 
 		return result;
 	}
-
+	
 	public Collection<QueryTestManifest<OWLClassExpression, OwlDirectSuperClassesTestOutput>> getDirectSuperClassesManifests(
 			final String name, final URL input) {
 
@@ -257,23 +328,34 @@ public class OwlExpectedTestOutputLoader {
 		for (final OWLClassExpression queryClass : queryClasses_) {
 
 			final Collection<OWLClassNode> superNodes = Operations.map(
-					superClasses_.get(queryClass),
-					new Operations.Transformation<OWLClass, OWLClassNode>() {
-						@Override
-						public OWLClassNode transform(final OWLClass cls) {
-							final OWLClassNode result = equivalent_.get(cls);
-							if (result != null) {
-								return result;
-							}
-							// else
-							return new OWLClassNode(cls);
-						}
-					});
+					superClasses_.get(queryClass), classToNode_);
 
 			result.add(
 					new QueryTestManifest<OWLClassExpression, OwlDirectSuperClassesTestOutput>(
 							name + " getDirectSuperClasses", input, queryClass,
 							new OwlDirectSuperClassesTestOutput(queryClass,
+									new HashSet<Node<OWLClass>>(superNodes))));
+		}
+
+		return result;
+	}
+
+
+	public Collection<QueryTestManifest<OWLClassExpression, OwlAllSuperClassesTestOutput>> getAllSuperClassesManifests(
+			final String name, final URL input) {
+
+		final List<QueryTestManifest<OWLClassExpression, OwlAllSuperClassesTestOutput>> result = new ArrayList<>(
+				queryClasses_.size());
+
+		for (final OWLClassExpression queryClass : queryClasses_) {
+
+			final Collection<OWLClassNode> superNodes = Operations.map(
+					getAllSuperClasses(queryClass), classToNode_);
+
+			result.add(
+					new QueryTestManifest<OWLClassExpression, OwlAllSuperClassesTestOutput>(
+							name + " getAllSuperClasses", input, queryClass,
+							new OwlAllSuperClassesTestOutput(queryClass,
 									new HashSet<Node<OWLClass>>(superNodes))));
 		}
 
@@ -289,18 +371,7 @@ public class OwlExpectedTestOutputLoader {
 		for (final OWLClassExpression queryClass : queryClasses_) {
 
 			final Collection<OWLClassNode> subNodes = Operations.map(
-					subClasses_.get(queryClass),
-					new Operations.Transformation<OWLClass, OWLClassNode>() {
-						@Override
-						public OWLClassNode transform(final OWLClass cls) {
-							final OWLClassNode result = equivalent_.get(cls);
-							if (result != null) {
-								return result;
-							}
-							// else
-							return new OWLClassNode(cls);
-						}
-					});
+					subClasses_.get(queryClass), classToNode_);
 
 			result.add(
 					new QueryTestManifest<OWLClassExpression, OwlDirectSubClassesTestOutput>(
@@ -312,6 +383,28 @@ public class OwlExpectedTestOutputLoader {
 		return result;
 	}
 
+	
+	public Collection<QueryTestManifest<OWLClassExpression, OwlAllSubClassesTestOutput>> getAllSubClassesManifests(
+			final String name, final URL input) {
+
+		final List<QueryTestManifest<OWLClassExpression, OwlAllSubClassesTestOutput>> result = new ArrayList<>(
+				queryClasses_.size());
+
+		for (final OWLClassExpression queryClass : queryClasses_) {
+
+			final Collection<OWLClassNode> superNodes = Operations.map(
+					getAllSuperClasses(queryClass), classToNode_);
+
+			result.add(
+					new QueryTestManifest<OWLClassExpression, OwlAllSubClassesTestOutput>(
+							name + " getAllSubClasses", input, queryClass,
+							new OwlAllSubClassesTestOutput(queryClass,
+									new HashSet<Node<OWLClass>>(superNodes))));
+		}
+
+		return result;
+	}
+	
 	public Collection<QueryTestManifest<OWLClassExpression, OwlDirectInstancesTestOutput>> getDirectInstancesManifests(
 			final String name, final URL input) {
 
@@ -320,21 +413,8 @@ public class OwlExpectedTestOutputLoader {
 
 		for (final OWLClassExpression queryClass : queryClasses_) {
 
-			final Collection<OWLNamedIndividualNode> instances = Operations.map(
-					instances_.get(queryClass),
-					new Operations.Transformation<OWLNamedIndividual, OWLNamedIndividualNode>() {
-						@Override
-						public OWLNamedIndividualNode transform(
-								final OWLNamedIndividual ind) {
-							final OWLNamedIndividualNode result = same_
-									.get(ind);
-							if (result != null) {
-								return result;
-							}
-							// else
-							return new OWLNamedIndividualNode(ind);
-						}
-					});
+			final Collection<OWLNamedIndividualNode> instances = Operations
+					.map(instances_.get(queryClass), individualToNode_);
 
 			result.add(
 					new QueryTestManifest<OWLClassExpression, OwlDirectInstancesTestOutput>(

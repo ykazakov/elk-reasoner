@@ -7,4 +7,5 @@ Ontology(
 SubClassOf(owl:Nothing ObjectIntersectionOf(:A ObjectSomeValuesFrom(:R :C)))
 SubClassOf(ObjectIntersectionOf(:A ObjectSomeValuesFrom(:R :C)) :A)
 ClassAssertion(ObjectIntersectionOf(:A ObjectSomeValuesFrom(:R :C)) :a)
+SubClassOf(:A :B)
 )

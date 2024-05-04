@@ -21,11 +21,7 @@
  */
 package org.semanticweb.elk.protege.proof;
 
-import java.util.Collections;
-import java.util.Set;
-
-import org.liveontologies.puli.Inference;
-import org.liveontologies.puli.Inferences;
+import org.liveontologies.puli.AxiomPinpointingInference;
 import org.liveontologies.puli.Proof;
 import org.semanticweb.elk.owlapi.ElkProver;
 import org.semanticweb.elk.owlapi.ElkReasoner;
@@ -35,7 +31,7 @@ public class ElkOwlJustificationProofService
 		extends ElkJustificationProofService {
 
 	@Override
-	public Proof<? extends Inference<?>> computeProof(OWLAxiom entailment) {
+	public Proof<? extends AxiomPinpointingInference<?, OWLAxiom>> computeProof(OWLAxiom entailment) {
 		ElkReasoner elkReasoner = getCurrentElkReasoner();
 		if (elkReasoner == null) {
 			return null;

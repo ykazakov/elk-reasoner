@@ -13,4 +13,16 @@ SubClassOf(ObjectIntersectionOf(:Kangaroo ObjectSomeValuesFrom(:has-body-part :P
 SubClassOf(ObjectIntersectionOf(:Kangaroo ObjectSomeValuesFrom(:has-body-part :Pouch) ObjectSomeValuesFrom(:has-child :KangarooInfant)) :Parent)
 SubClassOf(ObjectIntersectionOf(:Kangaroo ObjectSomeValuesFrom(:has-body-part :Pouch) ObjectSomeValuesFrom(:has-child :KangarooInfant)) :Pouch)
 
+SubClassOf(:Beast :Animal)
+SubClassOf(:Beast :Irrational)
+ 
+SubClassOf(:Human :Animal)
+SubClassOf(:Human :Rational)
+
+SubClassOf(:Kangaroo :Beast)
+
+SubClassOf(:KangarooInfant :Kangaroo)
+
+SubClassOf(:Parent :Human) 
+
 )

@@ -24,13 +24,14 @@ package org.semanticweb.elk.proofs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import org.liveontologies.puli.AxiomPinpointingInference;
 import org.liveontologies.puli.BaseProof;
-import org.liveontologies.puli.Inference;
 import org.liveontologies.puli.Inferences;
 import org.liveontologies.puli.ModifiableProof;
 import org.liveontologies.puli.Proof;
@@ -54,19 +55,20 @@ import org.semanticweb.elk.util.collections.ArrayHashSet;
  * 
  * @author Peter Skocovsky
  */
-public class InternalProof implements Proof<Inference<Object>> {
+public class InternalProof
+		implements Proof<AxiomPinpointingInference<?, ElkAxiom>> {
 
 	private final Reasoner reasoner_;
 	private final ElkAxiom goal_;
 
-	private final ModifiableProof<Inference<Object>> proof_ = new BaseProof<Inference<Object>>();
+	private final ModifiableProof<AxiomPinpointingInference<?, ElkAxiom>> proof_ = new BaseProof<>();
 
 	public InternalProof(final Reasoner reasoner, final ElkAxiom goal)
 			throws ElkException {
 		this.reasoner_ = reasoner;
 		this.goal_ = goal;
 		VerifiableQueryResult result = reasoner.checkEntailment(goal);
-		
+
 		try {
 			final Entailment entailment = result.getEntailment();
 			if (entailment == null) {
@@ -74,7 +76,7 @@ public class InternalProof implements Proof<Inference<Object>> {
 				return;
 			}
 			proof_.produce(Inferences.create("Goal inference", goal_,
-					Arrays.asList(entailment)));
+					Arrays.asList(entailment), Collections.emptySet()));
 			processEntailment(entailment, result.getEvidence(false));
 		} finally {
 			result.unlock();
@@ -112,8 +114,9 @@ public class InternalProof implements Proof<Inference<Object>> {
 					newPremises.add(reason);
 				}
 
-				proof_.produce(Inferences.create(inf.getName(),
-						inf.getConclusion(), newPremises));
+				proof_.produce(
+						Inferences.create(inf.getName(), inf.getConclusion(),
+								newPremises, Collections.emptySet()));
 
 				for (final Entailment premise : inf.getPremises()) {
 					if (entailmentDone.add(premise)) {
@@ -131,7 +134,7 @@ public class InternalProof implements Proof<Inference<Object>> {
 			for (final TracingInference inf : tracingProof
 					.getInferences(conclusion)) {
 
-				proof_.produce(new TracingInferenceWrap(inf));
+				proof_.produce(new TracingAxiomPinpointingInference(inf));
 
 				for (final Conclusion premise : inf.getPremises()) {
 					if (tracingDone.add(premise)) {
@@ -157,7 +160,7 @@ public class InternalProof implements Proof<Inference<Object>> {
 	}
 
 	@Override
-	public Collection<? extends Inference<Object>> getInferences(
+	public Collection<? extends AxiomPinpointingInference<?, ElkAxiom>> getInferences(
 			final Object conclusion) {
 		return proof_.getInferences(conclusion);
 	}

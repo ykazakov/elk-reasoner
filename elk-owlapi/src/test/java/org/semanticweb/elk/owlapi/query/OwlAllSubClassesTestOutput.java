@@ -34,20 +34,20 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
-public class OwlDirectSuperClassesTestOutput extends
-		OwlRelatedEntitiesTestOutput<OWLClass, OwlDirectSuperClassesTestOutput> {
+public class OwlAllSubClassesTestOutput extends
+		OwlRelatedEntitiesTestOutput<OWLClass, OwlAllSubClassesTestOutput> {
 
 	private static OWLDataFactory FACTORY_ = new OWLDataFactoryImpl();
 
-	OwlDirectSuperClassesTestOutput(OWLClassExpression query,
+	OwlAllSubClassesTestOutput(OWLClassExpression query,
 			Collection<? extends Node<OWLClass>> disjointNodes) {
 		super(query, disjointNodes);
 	}
-
-	OwlDirectSuperClassesTestOutput(ElkReasoner reasoner,
+	
+	OwlAllSubClassesTestOutput(ElkReasoner reasoner,
 			OWLClassExpression query) {
-		super(query, reasoner.computeSuperClasses(query, true)
-				.map(NodeSet::getNodes));
+		super(query,
+				reasoner.computeSubClasses(query, false).map(NodeSet::getNodes));
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class OwlDirectSuperClassesTestOutput extends
 			@Override
 			public void missingCanonical(OWLClass canonical) {
 				listener.missing(
-						FACTORY_.getOWLSubClassOfAxiom(getQuery(), canonical));
+						FACTORY_.getOWLSubClassOfAxiom(canonical, getQuery()));
 			}
 
 			@Override

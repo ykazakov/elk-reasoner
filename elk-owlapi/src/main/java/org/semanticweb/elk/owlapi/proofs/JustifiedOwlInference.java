@@ -2,11 +2,11 @@ package org.semanticweb.elk.owlapi.proofs;
 
 /*-
  * #%L
- * ELK OWL API Binding
+ * ELK OWL API v.4 Binding
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2011 - 2017 Department of Computer Science, University of Oxford
+ * Copyright (C) 2011 - 2021 Department of Computer Science, University of Oxford
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,34 +24,40 @@ package org.semanticweb.elk.owlapi.proofs;
 
 import java.util.Set;
 
+import org.liveontologies.puli.AxiomPinpointingInference;
+import org.liveontologies.puli.DelegatingInference;
 import org.liveontologies.puli.Inference;
-import org.liveontologies.puli.InferenceJustifier;
 import org.semanticweb.elk.owl.interfaces.ElkAxiom;
 import org.semanticweb.elk.owlapi.ElkConverter;
-import org.semanticweb.elk.proofs.InternalJustifier;
+import org.semanticweb.elk.proofs.JustifiedInernalInference;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
-public class OwlInternalJustifier
-		implements InferenceJustifier<Inference<?>, Set<OWLAxiom>>,
+class JustifiedOwlInference<C>
+		extends DelegatingInference<C, AxiomPinpointingInference<C, ElkAxiom>>
+		implements AxiomPinpointingInference<C, OWLAxiom>,
 		Function<ElkAxiom, OWLAxiom> {
 
-	private final InferenceJustifier<Inference<?>, Set<? extends ElkAxiom>> internalJustifier_ = new InternalJustifier();
+	JustifiedOwlInference(AxiomPinpointingInference<C, ElkAxiom> delegate) {
+		super(delegate);
+	}
 
-	private final ElkConverter elkConverter_ = ElkConverter.getInstance();
+	JustifiedOwlInference(Inference<C> delegate) {
+		this(new JustifiedInernalInference<>(delegate));
+	}
 
 	@Override
-	public Set<OWLAxiom> getJustification(Inference<?> inference) {
-		return ImmutableSet.copyOf(Iterables.transform(
-				internalJustifier_.getJustification(inference), this));
+	public Set<? extends OWLAxiom> getJustification() {
+		return ImmutableSet.copyOf(
+				Iterables.transform(getDelegate().getJustification(), this));
 	}
 
 	@Override
 	public OWLAxiom apply(final ElkAxiom input) {
-		return elkConverter_.convert(input);
+		return ElkConverter.getInstance().convert(input);
 	}
 
 }

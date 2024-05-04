@@ -51,8 +51,8 @@ public class ElkQueryDerivabilityTestOutput
 	public ElkQueryDerivabilityTestOutput(Reasoner reasoner, ElkAxiom query)
 			throws ElkException {
 		// TODO: completeness
-		this(query, TestUtils.getNonDerivable(reasoner, null,
-				reasoner.getElkFactory(), query) != null);
+		this(query, !TestUtils.getNonDerivable(reasoner, null,
+				reasoner.getElkFactory(), query).isEmpty());
 	}
 
 }

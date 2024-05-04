@@ -31,15 +31,15 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-import org.liveontologies.owlapi.proof.OWLProver;
+import org.liveontologies.puli.AxiomPinpointingInference;
 import org.liveontologies.puli.Inference;
-import org.liveontologies.puli.InferenceJustifier;
-import org.liveontologies.puli.InferenceJustifiers;
+import org.liveontologies.puli.Inferences;
 import org.liveontologies.puli.Proof;
 import org.liveontologies.puli.Proofs;
-import org.liveontologies.puli.pinpointing.InterruptMonitor;
-import org.liveontologies.puli.pinpointing.MinimalSubsetCollector;
-import org.liveontologies.puli.pinpointing.MinimalSubsetEnumerators;
+import org.liveontologies.puli.Prover;
+import org.liveontologies.puli.pinpointing.AxiomPinpointingCollector;
+import org.liveontologies.puli.pinpointing.AxiomPinpointingInterruptMonitor;
+import org.liveontologies.puli.pinpointing.TopDownRepairComputation;
 import org.semanticweb.elk.owl.inferences.TestUtils;
 import org.semanticweb.elk.owlapi.ElkProver;
 import org.semanticweb.elk.owlapi.ElkReasoner;
@@ -80,9 +80,10 @@ public class ProofTestUtils {
 		return Proofs.isDerivable(proof, conclusion);
 	}
 
-	public static void provabilityTest(OWLProver prover, final OWLAxiom axiom) {
-		assertTrue(String.format("Entailment %s not derivable!", axiom),
-				isDerivable(prover.getProof(axiom), axiom));
+	public static <Q, I extends Inference<?>> void provabilityTest(
+			Prover<Q, I> prover, final Q query) {
+		assertTrue(String.format("Entailment %s not derivable!", query),
+				isDerivable(prover.getProof(query), query));
 	}
 
 	public static void visitAllSubsumptionsForProofTests(
@@ -165,48 +166,44 @@ public class ProofTestUtils {
 		proofCompletenessTest(prover, conclusion, false);
 	}
 
-	public static void proofCompletenessTest(final ElkProver prover,
+	public static void proofCompletenessTest(final ElkProver elk,
 			final OWLAxiom conclusion, final boolean mustNotBeATautology) {
-		final OWLOntology ontology = prover.getRootOntology();
-		Proof<Inference<OWLAxiom>> proof = Proofs.removeAssertedInferences(
-				prover.getProof(conclusion),
-				ontology.getAxioms(Imports.INCLUDED));
-		final InferenceJustifier<Inference<OWLAxiom>, ? extends Set<? extends OWLAxiom>> justifier = InferenceJustifiers
-				.justifyAssertedInferences();
-		proofCompletenessTest(prover.getDelegate(), conclusion, conclusion,
-				proof, justifier, mustNotBeATautology);
+		Set<OWLAxiom> asserted = elk.getRootOntology()
+				.getAxioms(Imports.INCLUDED);
+		proofCompletenessTest(elk.getDelegate(),
+				query -> Proofs.justifyAsserted(Proofs.filter(
+						elk.getProof(query),
+						inf -> !Inferences.isAsserted(inf)
+								|| asserted.contains(inf.getConclusion()))),
+				conclusion, mustNotBeATautology);
 	}
 
-	public static <I extends Inference<?>> void proofCompletenessTest(
-			final ElkReasoner reasoner, final OWLAxiom entailment,
-			final Object conclusion, final Proof<? extends I> proof,
-			final InferenceJustifier<? super I, ? extends Set<? extends OWLAxiom>> justifier) {
-		proofCompletenessTest(reasoner, entailment, conclusion, proof,
-				justifier, false);
+	public static void proofCompletenessTest(final ElkReasoner reasoner,
+			final Prover<OWLAxiom, AxiomPinpointingInference<?, OWLAxiom>> prover,
+			final OWLAxiom entailment) {
+		proofCompletenessTest(reasoner, prover, entailment, false);
 	}
 
-	public static <I extends Inference<?>> void proofCompletenessTest(
-			final ElkReasoner reasoner, final OWLAxiom entailment,
-			final Object conclusion, final Proof<? extends I> proof,
-			final InferenceJustifier<? super I, ? extends Set<? extends OWLAxiom>> justifier,
-			final boolean mustNotBeATautology) {
+	public static void proofCompletenessTest(final ElkReasoner reasoner,
+			final Prover<OWLAxiom, AxiomPinpointingInference<?, OWLAxiom>> prover,
+			final OWLAxiom entailment, final boolean mustNotBeATautology) {
 
 		final OWLOntology ontology = reasoner.getRootOntology();
 		final OWLOntologyManager manager = ontology.getOWLOntologyManager();
 
 		// compute repairs
 
-		final Set<Set<? extends OWLAxiom>> repairs = new HashSet<Set<? extends OWLAxiom>>();
-		MinimalSubsetEnumerators.enumerateRepairs(conclusion, proof, justifier,
-				InterruptMonitor.DUMMY,
-				new MinimalSubsetCollector<OWLAxiom>(repairs));
+		AxiomPinpointingCollector<OWLAxiom> collector = new AxiomPinpointingCollector<OWLAxiom>();
+		TopDownRepairComputation.<OWLAxiom, OWLAxiom> getFactory()
+				.create(prover, AxiomPinpointingInterruptMonitor.DUMMY)
+				.enumerate(entailment, collector);
 
 		if (mustNotBeATautology) {
 			assertFalse("Entailment is a tautology; there are no repairs!",
-					repairs.isEmpty());
+					collector.getRepairs().isEmpty());
 		}
 
-		for (final Set<? extends OWLAxiom> repair : repairs) {
+		for (final Set<? extends OWLAxiom> repair : collector.getRepairs()) {
 
 			final List<OWLOntologyChange> deletions = new ArrayList<OWLOntologyChange>();
 			final List<OWLOntologyChange> additions = new ArrayList<OWLOntologyChange>();
@@ -223,7 +220,7 @@ public class ProofTestUtils {
 			manager.applyChanges(additions);
 
 			assertFalse("Not all proofs were found!\n" + "Conclusion: "
-					+ conclusion + "\n" + "Repair: " + repair,
+					+ entailment + "\n" + "Repair: " + repair,
 					conclusionDerived);
 		}
 

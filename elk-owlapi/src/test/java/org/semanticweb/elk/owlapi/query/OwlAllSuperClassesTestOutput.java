@@ -34,19 +34,19 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
-public class OwlDirectSuperClassesTestOutput extends
-		OwlRelatedEntitiesTestOutput<OWLClass, OwlDirectSuperClassesTestOutput> {
+public class OwlAllSuperClassesTestOutput extends
+		OwlRelatedEntitiesTestOutput<OWLClass, OwlAllSuperClassesTestOutput> {
 
 	private static OWLDataFactory FACTORY_ = new OWLDataFactoryImpl();
 
-	OwlDirectSuperClassesTestOutput(OWLClassExpression query,
+	OwlAllSuperClassesTestOutput(OWLClassExpression query,
 			Collection<? extends Node<OWLClass>> disjointNodes) {
 		super(query, disjointNodes);
 	}
 
-	OwlDirectSuperClassesTestOutput(ElkReasoner reasoner,
+	OwlAllSuperClassesTestOutput(ElkReasoner reasoner,
 			OWLClassExpression query) {
-		super(query, reasoner.computeSuperClasses(query, true)
+		super(query, reasoner.computeSuperClasses(query, false)
 				.map(NodeSet::getNodes));
 	}
 

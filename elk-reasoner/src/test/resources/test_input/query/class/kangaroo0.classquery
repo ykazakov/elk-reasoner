@@ -12,4 +12,17 @@ SubClassOf(:MaternityKangaroo ObjectSomeValuesFrom(:has-child owl:Thing))
 
 SubClassOf(ObjectSomeValuesFrom(:has-child owl:Thing) :Human)
 
+SubClassOf(:Beast :Animal)
+SubClassOf(:Beast :Irrational)
+ 
+SubClassOf(:Human :Animal)
+SubClassOf(:Human :Rational)
+
+SubClassOf(:Kangaroo :Beast)
+
+SubClassOf(:KangarooInfant :Kangaroo)
+
+SubClassOf(:MaternityKangaroo :Human)
+SubClassOf(:MaternityKangaroo :Kangaroo)
+
 )
