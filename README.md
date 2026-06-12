@@ -61,7 +61,7 @@ See the [general documentation](https://protegeproject.github.io/protege/) about
 
 ## License
 
-ELK is Copyright (c) 2011 - 2024 Live Ontologies Project.
+ELK is Copyright (c) 2011 - 2026 Live Ontologies Project.
 
 All sources of this project are available under the terms of the 
 [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
