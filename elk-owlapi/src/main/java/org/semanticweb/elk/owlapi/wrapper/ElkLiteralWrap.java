@@ -47,7 +47,13 @@ public class ElkLiteralWrap<T extends OWLLiteral> extends ElkObjectWrap<T>
 
 	@Override
 	public String getLexicalForm() {
-		return this.owlObject.getLiteral();
+		String lexicalForm = this.owlObject.getLiteral();
+		if (this.owlObject.hasLang()) {
+			lexicalForm = lexicalForm + "@" + this.owlObject.getLang();
+		} else if (this.owlObject.getDatatype().isRDFPlainLiteral()) {
+			lexicalForm = lexicalForm + "@";
+		}
+		return lexicalForm;
 	}
 
 	@Override

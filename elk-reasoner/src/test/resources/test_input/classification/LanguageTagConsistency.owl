@@ -1,0 +1,19 @@
+Prefix(:=<http://www.example.org/reasonerTester#>)
+Ontology (
+  Declaration(NamedIndividual(:a))
+  Declaration(Class(:B))
+  Declaration(DataProperty(:dr))
+
+  EquivalentClasses(
+      DataHasValue(:dr "s1"@fr)
+      DataHasValue(:dr "s2")
+      :B
+  )
+
+  DisjointClasses(
+      DataHasValue(:dr "s2")
+      DataHasValue(:dr "s1"@en)
+  )
+
+  ClassAssertion(:B :a)
+)
