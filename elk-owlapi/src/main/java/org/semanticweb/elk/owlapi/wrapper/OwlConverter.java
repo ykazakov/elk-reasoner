@@ -514,6 +514,10 @@ public class OwlConverter {
 	}
 
 	public ElkLiteral convert(OWLLiteral owlLiteral) {
+		if (!owlLiteral.hasLang() && owlLiteral.getDatatype().isString()) {
+			return new ElkLiteralWrap<OWLLiteral>(
+					org.semanticweb.owlapi.apibinding.OWLManager.getOWLDataFactory().getOWLLiteral(owlLiteral.getLiteral(), org.semanticweb.owlapi.vocab.OWL2Datatype.RDF_PLAIN_LITERAL));
+		}
 		return new ElkLiteralWrap<OWLLiteral>(owlLiteral);
 	}
 

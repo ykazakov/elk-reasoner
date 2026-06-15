@@ -1,0 +1,15 @@
+Prefix(:=<http://www.example.org/reasonerTester#>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Ontology(
+    SubClassOf(:S1_1 owl:Thing)
+    SubClassOf(:S1_XSD_STRING owl:Thing)
+    SubClassOf(:S1_RDF_PLAIN_LITERAL owl:Thing)
+    SubClassOf(:S1_EN_1 owl:Thing)
+    SubClassOf(:S1_EN_RDF_PLAIN_LITERAL owl:Thing)
+    SubClassOf(:INT_1_1 owl:Thing)
+    SubClassOf(:INT_PLUS_1 owl:Thing)
+
+    EquivalentClasses(:S1_1 :S1_XSD_STRING :S1_RDF_PLAIN_LITERAL)
+    EquivalentClasses(:S1_EN_1 :S1_EN_RDF_PLAIN_LITERAL)
+    EquivalentClasses(:INT_1_1 :INT_PLUS_1)
+)
