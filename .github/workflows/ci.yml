@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.job_name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - job_name: java11-linux-site
+            java: '11'
+            site: '1'
+          - job_name: java8-linux
+            java: '8'
+          - job_name: java11-linux
+            java: '11'
+          - job_name: java17-linux
+            java: '17'
+          - job_name: java21-linux
+            java: '21'
+          - job_name: java25-linux
+            java: '25'
+          - job_name: java8-linux-deploy
+            java: '8'
+            deploy: '1'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+
+      - name: Build
+        run: mvn install --settings .ci-settings.xml -DskipTests=true -U -B
+
+      - name: Test
+        run: mvn test -Dassembly.skipAssembly=true -B
+
+      - name: Site
+        if: matrix.site == '1'
+        run: mvn site -B
+
+      - name: Deploy
+        if: matrix.deploy == '1' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        run: mvn deploy --settings .ci-settings.xml -DskipTests=true -B
