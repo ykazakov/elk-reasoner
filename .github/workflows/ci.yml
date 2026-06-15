@@ -21,6 +21,8 @@ jobs:
             java: '17'
           - job_name: java21-linux
             java: '21'
+          - job_name: java25-linux
+            java: '25'
           - job_name: java8-linux-deploy
             java: '8'
             deploy: '1'
