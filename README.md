@@ -34,10 +34,10 @@ ELK is provided in several [distribution packages](https://github.com/liveontolo
 
 ### Stand-alone application
 
-A stand-alone command-line [Java application](https://search.maven.org/remote_content?g=io.github.liveontologies&a=elk-distribution-cli&v=0.6.0&e=zip) can perform selected reasoning tasks with a given ontology. E.g., the following command classifies the [Pizza ontology](https://protege.stanford.edu/ontologies/pizza/pizza.owl) and saves the result in another file:
+A stand-alone command-line [Java application](https://search.maven.org/remote_content?g=io.github.liveontologies&a=elk-distribution-cli&v=0.6.0&e=zip) can perform selected reasoning tasks with a given ontology. E.g., the following command classifies the [OWL 2 Primer ontology](https://raw.githubusercontent.com/liveontologies/elk-reasoner/main/elk-owl-parent/elk-owl-implementation/src/test/resources/owl2primer.owl) and saves the result in another file:
     
 ```
-java -jar elk.jar -i pizza.owl -c -o pizza-taxonomy.owl
+java -jar elk.jar -i owl2primer.owl -c -o owl2primer-taxonomy.owl
 ```
 
 ### OWL API
