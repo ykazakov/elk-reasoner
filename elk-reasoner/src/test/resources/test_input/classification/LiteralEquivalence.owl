@@ -1,0 +1,24 @@
+Prefix(:=<http://www.example.org/reasonerTester#>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+
+Ontology (
+  Declaration(Class(:S1_1))
+  Declaration(Class(:S1_XSD_STRING))
+  Declaration(Class(:S1_RDF_PLAIN_LITERAL))
+  Declaration(Class(:S1_EN_1))
+  Declaration(Class(:S1_EN_RDF_PLAIN_LITERAL))
+  Declaration(Class(:INT_1_1))
+  Declaration(Class(:INT_PLUS_1))
+
+  Declaration(DataProperty(:dr))
+
+  EquivalentClasses(:S1_1 DataHasValue(:dr "s1"^^xsd:string))
+  EquivalentClasses(:S1_XSD_STRING DataHasValue(:dr "s1"^^xsd:string))
+  EquivalentClasses(:S1_RDF_PLAIN_LITERAL DataHasValue(:dr "s1"^^xsd:string))
+  EquivalentClasses(:S1_EN_1 DataHasValue(:dr "s1"@en))
+  EquivalentClasses(:S1_EN_RDF_PLAIN_LITERAL DataHasValue(:dr "s1@en"^^rdf:PlainLiteral))
+
+  EquivalentClasses(:INT_1_1 DataHasValue(:dr "1"^^xsd:integer))
+  EquivalentClasses(:INT_PLUS_1 DataHasValue(:dr "1"^^xsd:integer))
+)
